@@ -1,5 +1,10 @@
 # NextEuropa Platform change log
 
+## Version 2.4.0
+
+### Improvements
+  * NEPT-639 - Files inserted in Body through Media are wrapped in div that make it difficult to place on a narrative label / sentence
+
 ## Version 2.3.0
 
 ### Improvements
@@ -32,8 +37,7 @@
   * NEPT-424 - Include the path "/tests" in the CodeSniffer configuration file
   * NEPT-525 - Remove apachesolr, css_injector, js_injector and contact from communities profile
   * NEPT-553 - Nexteuropa_newsroom upgraded
-  * NEPT-639 - Files inserted in Body through Media are wrapped in div that make it difficult to place on a narrative label / sentence
-
+  
 ### New features (For more details on each feature, see the README.md file at the root of the feature's folder)
   * NEPT-79 - Performance/Varnish - An administrator can enable the web frontend cache control feature through Feature set
   * NEPT-80 - Performance/Varnish - Automatically clear the web frontend cache of particular content when an action is performed on it
