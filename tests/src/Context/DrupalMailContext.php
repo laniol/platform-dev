@@ -11,8 +11,7 @@ use Behat\Behat\Hook\Scope\BeforeScenarioScope;
 use Behat\Gherkin\Node\TableNode;
 use function bovigo\assert\assert;
 use function bovigo\assert\predicate\equals;
-use Drupal\DrupalDriverManager;
-use Drupal\DrupalExtension\Context\DrupalSubContextInterface;
+use function bovigo\assert\predicate\isNotEmpty;
 use Drupal\DrupalExtension\Context\RawDrupalContext;
 
 /**
@@ -20,20 +19,7 @@ use Drupal\DrupalExtension\Context\RawDrupalContext;
  *
  * This context can be used for testing the mail features.
  */
-class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInterface {
-  /**
-   * The Drupal driver manager.
-   *
-   * @var DrupalDriverManager
-   */
-  protected $drupal;
-
-  /**
-   * Contains original variable values set during test execution.
-   *
-   * @var array
-   */
-  protected $variables = array();
+class DrupalMailContext extends RawDrupalContext {
 
   /**
    * The captured mail data.
@@ -48,16 +34,6 @@ class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInte
    * @var VariableContext
    */
   protected $variableContext;
-
-  /**
-   * Constructs a DrupalMailContext object.
-   *
-   * @param DrupalDriverManager $drupal
-   *   The Drupal driver manager.
-   */
-  public function __construct(DrupalDriverManager $drupal) {
-    $this->drupal = $drupal;
-  }
 
   /**
    * Grabs other contexts we rely on from the environment.
@@ -92,18 +68,30 @@ class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInte
   }
 
   /**
+   * Gets the last email sent.
+   *
+   * @Then I get the last e-mail sent
+   */
+  public function getInternalMailToCapturedMail() {
+    $captured_mail = $this->getLastCapturedMail();
+
+    if (!empty($captured_mail)) {
+      $this->capturedMail = $captured_mail;
+    }
+  }
+
+  /**
    * Verifies that Drupal internal mail handler received the mail.
    *
    * @Then the e-mail has been sent
    */
   public function assertInternalMailHandlerReceivedTheMail() {
-    $captured_mail = $this->getCapturedMail();
-
-    if (empty($captured_mail)) {
-      throw new \Exception('The Drupal internal mail handler did not receive any mail.');
-    }
-
-    $this->capturedMail = $captured_mail;
+    $captured_mail = $this->getLastCapturedMail();
+    assert(
+      $captured_mail,
+      isNotEmpty(),
+      'The Drupal internal mail handler did not receive any mail.'
+    );
   }
 
   /**
@@ -116,7 +104,11 @@ class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInte
     $expected_properties = $table->getRowsHash();
 
     foreach ($expected_properties as $key => $value) {
-      assert($this->capturedMail[$key], equals($value));
+      assert(
+        $this->capturedMail[$key],
+        equals($value),
+        "The value {$this->capturedMail[$key]} is different from the expected {$value}."
+      );
     }
   }
 
@@ -129,7 +121,7 @@ class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInte
   protected function assertCapturedMail() {
     if (!$this->capturedMail) {
       throw new \Exception(
-        'The internal mail handler first needs to confirm that it captured the mail'
+        'The internal mail handler first needs to get the captured mail'
       );
     }
   }
@@ -140,7 +132,7 @@ class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInte
    * @return array
    *   An empty or a mail data array
    */
-  private function getCapturedMail() {
+  private function getLastCapturedMail() {
     // During the first run with the clean state the variable_get function
     // doesn't return value for the 'drupal_test_email_collector'. You can
     // check that by looking on the global variable $conf values.
@@ -152,6 +144,10 @@ class DrupalMailContext extends RawDrupalContext implements DrupalSubContextInte
       ->execute()
       ->fetchField();
     $captured_mail = unserialize($mail_from_db);
+
+    if (empty($captured_mail)) {
+      return array();
+    }
 
     if (count($captured_mail)) {
       return array_pop($captured_mail);

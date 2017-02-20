@@ -7,8 +7,8 @@ Feature: Drupal Mail features
   Background:
     Given platform is configured to use the internal mail handling
     And users:
-      | name  | mail         | roles        |
-      | foo   | foo@bar.com  | contributor  |
+      | name  | mail         | roles                |
+      | foo   | foo@bar.com  | authenticated user   |
 
   Scenario: Checking the basic mail functionality for requesting new password by using the username as identifier.
     When I go to "/user"
@@ -17,7 +17,8 @@ Feature: Drupal Mail features
     And I press "E-mail new password"
     Then I should see the success message "Further instructions have been sent to your e-mail address."
     And the e-mail has been sent
-    And the sent e-mail has the following properties:
+    When I get the last e-mail sent
+    Then the sent e-mail has the following properties:
       | from        | admin@example.com                                   |
       | to          | foo@bar.com                                         |
       | subject     | Replacement login information for foo at NextEuropa |
